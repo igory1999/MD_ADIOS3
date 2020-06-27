@@ -16,11 +16,16 @@ def q_kill_simulation(data):
 if(__name__ == '__main__'):
     current_dir = sys.argv[1]
     run_dir = sys.argv[2]
+    MAX_ITERATIONS = int(sys.argv[3])
     print(f"In aggregator: {current_dir}")
     dir_aggregator = f'{run_dir}/aggregator'
     dir_simulations = f'{run_dir}/simulations'
     ADIOS_XML = f'{current_dir}/adios.xml'
 
+
+    print(f"dir_simulations={dir_simulations}")
+    print(f"dir_aggregator={dir_aggregator}")
+    
     
     logging.basicConfig(filename=f'{dir_aggregator}/aggregator.log', filemode='w', level=logging.INFO)
     logging.info("Start")
@@ -29,10 +34,15 @@ if(__name__ == '__main__'):
     sim_streams = {}
     sim_data = {}
     
-    max_iterations = 30
+    max_iterations = MAX_ITERATIONS
     
     while(max_iterations > 0):
+        print("="*30)
+        print(f"max_iterations = {max_iterations}")
         new_simulations = glob.glob(f"{dir_simulations}/new/*")
+        while(len(new_simulations)==0 and max_iterations == MAX_ITERATIONS):
+            time.sleep(3)
+            new_simulations = glob.glob(f"{dir_simulations}/new/*")
         for n in new_simulations:
             r = n.replace("new","running")
             a = n.replace("new","all")

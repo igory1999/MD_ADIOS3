@@ -27,23 +27,29 @@ for d in ["new", "running", "stopped", "all"]:
     subprocess.getstatusoutput(f"mkdir -p  {run_dir}/simulations/{d}")
 
 ntasks = 5
+MAX_ITERATIONS = 30
 
 p = Pipeline()
 s = Stage()
 
 aggregator_dir =  f'{run_dir}/aggregator'
-t = Task()
-t.name = "aggregator"
-t.executable = PYTHON
-t.arguments = [f'{current_dir}/aggregator.py', current_dir, run_dir]
-subprocess.getstatusoutput(f'mkdir -p {run_dir}/aggregator')
-s.add_tasks(t)
 
 for i in range(ntasks):
     t = Task()
+    t.cpu_reqs = {'processes':1, 'process_type': None, 'threads_per_process':4, 'thread_type': 'OpenMP'}
+    t.gpu_reqs = {'processes': 0, 'process_type': None, 'threads_per_process': 0, 'thread_type': None}
     t.executable = PYTHON
     t.arguments = [f'{current_dir}/simulation.py', f'{run_dir}/simulations/all', ADIOS_XML, i,  aggregator_dir]
     s.add_tasks(t)
+
+t = Task()
+t.cpu_reqs = {'processes':1, 'process_type': None, 'threads_per_process':4, 'thread_type': 'OpenMP'}
+t.gpu_reqs = {'processes': 0, 'process_type': None, 'threads_per_process': 0, 'thread_type': None}
+t.name = "aggregator"
+t.executable = PYTHON
+t.arguments = [f'{current_dir}/aggregator.py', current_dir, run_dir, MAX_ITERATIONS]
+subprocess.getstatusoutput(f'mkdir -p {run_dir}/aggregator')
+s.add_tasks(t)
 
 p.add_stages(s)
 pipelines = []    
@@ -55,7 +61,10 @@ res_dict = {
     'resource': RESOURCE,
     'walltime': 10,
     'cpus': config[RESOURCE]['cores'],
-    'gpus': config[RESOURCE]['gpus']
+    'gpus': config[RESOURCE]['gpus'],
+    'queue': config[RESOURCE]['queue'],
+    'schema': config[RESOURCE]['schema'],
+    'project': config[RESOURCE]['project']
 }
 
 appman.resource_desc = res_dict
